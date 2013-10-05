@@ -11,60 +11,33 @@ try{
     $dbh->query('set names utf8');
     mysqli_autocommit($dbh, FALSE);
     $table = 'users';
-    //deposit update
-        if ($_GET['act'] == 'update_deposit'){
-        $json = json_decode(file_get_contents('php://input'), true);
-        if (is_assoc($json['names'])) $json['names'] = array($json['names']);
-        $ids = array();
-        if ( !isset($_GET['back_dep_select']) || !isset($_GET['balance_plus'])) {$dbh->rollback(); throw new Exception;}
-        $Bond = $_GET['back_dep_select'];
-        $balance_plus=$_GET['balance_plus'];
-        foreach ($json['names'] as $key => $val){
-        }   
-            $result1 = $dbh->query('UPDATE users SET balance = balance + ' .$balance_plus.' WHERE secondName IN ("'.$Bond.'")');
-            $dbh->commit();
-            $result = $dbh->query('SELECT * FROM '.$table.' WHERE secondName IN ("'.$Bond.'")');
-            $json = array();
-            while ($row = $result->fetch_assoc()) { $json[] =  $row; }
-            echo json_encode(array('names' => $json, 'success' => true));
-        } 
-        //overdraw update   
-        if ($_GET['act'] == 'update_over'){
-        $json = json_decode(file_get_contents('php://input'), true);
-        if (is_assoc($json['names'])) $json['names'] = array($json['names']);
-        $ids = array();
-        if ( !isset($_GET['back_dep_select']) || !isset($_GET['balance_plus'])) {$dbh->rollback(); throw new Exception;}
-        $Bond = $_GET['back_dep_select'];
-        $balance_plus=$_GET['balance_plus'];
-        foreach ($json['names'] as $key => $val){
-        }   
-            $result1 = $dbh->query('UPDATE users SET balance = balance - ' .$balance_plus.' WHERE secondName IN ("'.$Bond.'")');
-            $dbh->commit();
-            $result = $dbh->query('SELECT * FROM '.$table.' WHERE secondName IN ("'.$Bond.'")');
-            $json = array();
-            while ($row = $result->fetch_assoc()) { $json[] =  $row; }
-            echo json_encode(array('names' => $json, 'success' => true));
-        }
-        //transfer update
-        if ($_GET['act'] == 'update_transfer'){
-        $json = json_decode(file_get_contents('php://input'), true);
-        if (is_assoc($json['names'])) $json['names'] = array($json['names']);
-        $ids = array();
-        if ( !isset($_GET['back_dep_select']) || !isset($_GET['balance_plus']) || !isset($_GET['back_dep_select_rec'])) {$dbh->rollback(); throw new Exception;}
-        $Bond = $_GET['back_dep_select'];
-        $Bond1 = $_GET['back_dep_select_rec'];
-        $balance_plus=$_GET['balance_plus'];
-        foreach ($json['names'] as $key => $val){
-        }   
-            $result1 = $dbh->query('UPDATE users SET balance = balance - ' .$balance_plus.' WHERE secondName IN ("'.$Bond.'")');
-            $result1 = $dbh->query('UPDATE users SET balance = balance + ' .$balance_plus.' WHERE secondName IN ("'.$Bond1.'")');
-            $dbh->commit();
-            $result = $dbh->query('SELECT * FROM '.$table.' WHERE secondName IN ("'.$Bond.'")');
-            $json = array();
-            while ($row = $result->fetch_assoc()) { $json[] =  $row; }
-            echo json_encode(array('names' => $json, 'success' => true));
-        }
+    //deposit update && overdraw update && transfer update
+        if ($_GET['act'] == 'update_deposit'  || $_GET['act'] == 'update_over' || $_GET['act'] == 'update_transfer'){
+            if ( !isset($_GET['back_dep_select']) || !isset($_GET['balance_plus'])) {$dbh->rollback(); throw new Exception;}
+            $Bond = $_GET['back_dep_select'];
+            $balance_plus=$_GET['balance_plus'];
 
+            if($_GET['act'] == 'update_deposit'){
+                $oper = '+';
+            }
+            elseif ($_GET['act'] == 'update_over') {
+                $oper = '-';
+            }
+            elseif ($_GET['act'] == 'update_transfer') {
+                $oper = '-';
+                if ( !isset($_GET['back_dep_select_rec'])) {$dbh->rollback(); throw new Exception;}            
+                $Bond1 = $_GET['back_dep_select_rec'];
+       
+                $result1 = $dbh->query('UPDATE users SET balance = balance + ' .$balance_plus.' WHERE secondName IN ("'.$Bond1.'")');
+
+            }
+                $result1 = $dbh->query('UPDATE users SET balance = balance '.$oper.$balance_plus.' WHERE secondName IN ("'.$Bond.'")');
+                $dbh->commit();
+                $result = $dbh->query('SELECT * FROM '.$table.' WHERE secondName IN ("'.$Bond.'")');
+                $json = array();
+                while ($row = $result->fetch_assoc()) { $json[] =  $row; }
+                echo json_encode(array('names' => $json, 'success' => true));
+        }
     
     if ($_GET['act'] != 'read'){
         $json = json_decode(file_get_contents('php://input'), true);
